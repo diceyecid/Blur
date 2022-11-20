@@ -15,9 +15,9 @@ class uploadHandler(blur.web.RequestHandler):
             fh.close()
         self.write(f"http://localhost:4040/img/{f.filename}")
 
-(__name__ == "__main__")"
+if (__name__ == "__main__")"
     app = blur.web.Application([
-        ("/" uploadHandler),
+        ("/", uploadHandler),
         ("/img/(.*)", blur.web.StaticFileHandler, {"path" :"img"})
     ])
 
