@@ -1,4 +1,4 @@
-# Building Image
+# Building Image service
 
 import blur.web
 import blur.ioloop
