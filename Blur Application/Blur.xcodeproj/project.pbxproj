@@ -15,7 +15,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		D785D970292998D7008D457A /* Blur Application.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Blur Application.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D785D970292998D7008D457A /* Blur.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blur.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D785D973292998D7008D457A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D785D975292998D7008D457A /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		D785D977292998D7008D457A /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -46,7 +46,7 @@
 		D785D971292998D7008D457A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D785D970292998D7008D457A /* Blur Application.app */,
+				D785D970292998D7008D457A /* Blur.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -67,9 +67,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D785D96F292998D7008D457A /* Blur Application */ = {
+		D785D96F292998D7008D457A /* Blur */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D785D984292998D9008D457A /* Build configuration list for PBXNativeTarget "Blur Application" */;
+			buildConfigurationList = D785D984292998D9008D457A /* Build configuration list for PBXNativeTarget "Blur" */;
 			buildPhases = (
 				D785D96C292998D7008D457A /* Sources */,
 				D785D96D292998D7008D457A /* Frameworks */,
@@ -79,9 +79,9 @@
 			);
 			dependencies = (
 			);
-			name = "Blur Application";
+			name = Blur;
 			productName = "Blur Application";
-			productReference = D785D970292998D7008D457A /* Blur Application.app */;
+			productReference = D785D970292998D7008D457A /* Blur.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -99,7 +99,7 @@
 					};
 				};
 			};
-			buildConfigurationList = D785D96B292998D7008D457A /* Build configuration list for PBXProject "Blur Application" */;
+			buildConfigurationList = D785D96B292998D7008D457A /* Build configuration list for PBXProject "Blur" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -112,7 +112,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				D785D96F292998D7008D457A /* Blur Application */,
+				D785D96F292998D7008D457A /* Blur */,
 			);
 		};
 /* End PBXProject section */
@@ -329,7 +329,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D785D96B292998D7008D457A /* Build configuration list for PBXProject "Blur Application" */ = {
+		D785D96B292998D7008D457A /* Build configuration list for PBXProject "Blur" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D785D982292998D9008D457A /* Debug */,
@@ -338,7 +338,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D785D984292998D9008D457A /* Build configuration list for PBXNativeTarget "Blur Application" */ = {
+		D785D984292998D9008D457A /* Build configuration list for PBXNativeTarget "Blur" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D785D985292998D9008D457A /* Debug */,
