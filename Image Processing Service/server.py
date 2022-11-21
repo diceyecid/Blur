@@ -12,16 +12,16 @@ class uploadImgHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-    # uplaod image to Img folder
+    # uplaod image to img folder
     def post(self):
         if( 'image' in self.request.files ):
             files = self.request.files["image"]
             f = files[0]
-            fh = open(f"Img/{f.filename}", "wb")
+            fh = open(f"img/{f.filename}", "wb")
             fh.write(f.body)
             fh.close()
-            # self.write( URL + f"Img/{f.filename}")
-            self.redirect( URL + f'Img/{ f.filename }' )
+            # self.write( URL + f"img/{f.filename}")
+            self.redirect( URL + f'img/{ f.filename }' )
         else:
             self.write( 'No image uploaded' )
 
@@ -29,7 +29,7 @@ class uploadImgHandler(tornado.web.RequestHandler):
 if (__name__ == "__main__"):
     app = tornado.web.Application([
         ("/", uploadImgHandler),
-        ("/Img/(.*)", tornado.web.StaticFileHandler, {"path" :"Img"})
+        ("/img/(.*)", tornado.web.StaticFileHandler, {"path" :"img"})
     ])
 
     app.listen(4040)

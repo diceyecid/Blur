@@ -106,7 +106,7 @@ venv/
 .idea
 
 # image folder
-Img/
+img/
 
 
 #---------- Others ----------#
