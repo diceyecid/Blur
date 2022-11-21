@@ -25,6 +25,7 @@ class ViewController: UIViewController
     
     // for drawing bounding box
     private let overlayLayer = CALayer()
+    private var faceObservations: [VNFaceObservation] = []
     private var bboxTransform =  CGAffineTransform.identity
     
     // for metal GPU accelleration
@@ -32,7 +33,7 @@ class ViewController: UIViewController
     private let metalDevice = MTLCreateSystemDefaultDevice()
     private var metalCommandQueue: MTLCommandQueue!
     
-    // for blurring
+    // for using filters
     private var context: CIContext!
     private var curImage: CIImage?
     private let scaleFilter = CIFilter( name: "CILanczosScaleTransform" )
@@ -237,8 +238,10 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate
         guard let pixelBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer( sampleBuffer ) else { return }
         
         // get a CIImage ourt of the CVImageBuffer
-        curImage = CIImage( cvPixelBuffer: pixelBuffer )
-        mtkView.draw()
+        self.curImage = CIImage( cvPixelBuffer: pixelBuffer )
+        
+        // start drawing metal view
+        self.mtkView.draw()
         
         // face dection request
         let faceDetectionReq = VNDetectFaceRectanglesRequest
@@ -253,23 +256,24 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate
             
             // get results from face detection
             guard let results = req.results as? [VNFaceObservation] else { return }
-    
-            // add observations to the tracking list
-            DispatchQueue.main.async
-            {
-                // clear all bounding boxes from previous frame
-                self.overlayLayer.sublayers?.forEach{ layer in layer.removeFromSuperlayer() }
-                
-                for obs in results
-                {
-                    // add a bounding box to each observed face
-                    let layer = CAShapeLayer()
-                    layer.frame = obs.boundingBox.applying( self.bboxTransform )
-                    layer.borderColor = UIColor.green.withAlphaComponent( 0.7 ).cgColor
-                    layer.borderWidth = 5
-                    self.overlayLayer.addSublayer( layer )
-                }
-            }
+            self.faceObservations = results
+            
+            // draw bounding boxes
+//            DispatchQueue.main.async
+//            {
+//                // clear all bounding boxes from previous frame
+//                self.overlayLayer.sublayers?.forEach{ layer in layer.removeFromSuperlayer() }
+//
+//                for obs in results
+//                {
+//                    // add a bounding box to each observed face
+//                    let layer = CAShapeLayer()
+//                    layer.frame = obs.boundingBox.applying( self.bboxTransform )
+//                    layer.borderColor = UIColor.green.withAlphaComponent( 0.7 ).cgColor
+//                    layer.borderWidth = 5
+//                    self.overlayLayer.addSublayer( layer )
+//                }
+//            }
         }
         
         DispatchQueue.global( qos: .userInteractive ).async
@@ -309,16 +313,42 @@ extension ViewController: MTKViewDelegate
         // make sure the current drawable object for this metal view is available
         guard let curDrawable = view.currentDrawable else { return }
         
-        // make sure frame is centered on screen
+        // variables
         let imageWidth = image.extent.width
         let imageHeight = image.extent.height
         let drawableWidth = view.drawableSize.width
         let drawableHeight = view.drawableSize.height
-        let xOffsetFromLeft = ( drawableWidth - imageWidth ) / 2
-        let yOffsetFromBottom = ( drawableHeight - imageHeight ) / 2
+        var filteredImage = image
+        
+        // blur image at face observation bounding boxes
+        var blurredImage = filteredImage
+        for obs in faceObservations
+        {
+            let bbox = VNImageRectForNormalizedRect( obs.boundingBox,
+                                                     Int( captureResolution.width ),
+                                                     Int( captureResolution.height ) )
+            let bboxImage = blurredImage.cropped( to: bbox )
+            blurFilter?.setValue( bboxImage, forKey: kCIInputImageKey )
+            blurFilter?.setValue( 10.0, forKey: kCIInputRadiusKey )
+            blurredImage = ( blurFilter?.outputImage?.composited( over: blurredImage ) )!
+        }
+        filteredImage = blurredImage
+        
+        // resize image to fit screen
+        let scaledImage = filteredImage
+        let scaleX = drawableWidth / imageWidth
+        let scaleY = drawableHeight / imageHeight
+        let scaleFactor = scaleX > scaleY ? scaleX : scaleY
+        scaleFilter?.setValue( scaledImage, forKey: kCIInputImageKey )
+        scaleFilter?.setValue( scaleFactor, forKey: kCIInputScaleKey )
+        filteredImage = ( scaleFilter?.outputImage )!
+        
+        // calcuate offset to place the image in center of screen
+        let xOffsetFromLeft = ( drawableWidth - filteredImage.extent.width ) / 2
+        let yOffsetFromBottom = ( drawableHeight - filteredImage.extent.height ) / 2
         
         // render into the metal texture
-        self.context.render( image,
+        self.context.render( filteredImage,
                              to: curDrawable.texture,
                              commandBuffer: commandBuffer,
                              bounds: CGRect( origin: CGPoint( x: -xOffsetFromLeft, y: -yOffsetFromBottom ), size: view.drawableSize ),
