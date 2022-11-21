@@ -8,13 +8,18 @@
 import UIKit
 import AVKit
 import Vision
+import MetalKit
+import CoreImage
 
-class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate
+class ViewController: UIViewController
 {
+    /*---------- variables ----------*/
+    
+    
     // AVCapture variables
     private let captureSession = AVCaptureSession()
     private let captureDevice = AVCaptureDevice.default( for: .video )
-    private let previewLayer = AVCaptureVideoPreviewLayer()
+//    private let previewLayer = AVCaptureVideoPreviewLayer()
     private let dataOutput = AVCaptureVideoDataOutput()
     private var captureResolution = CMVideoDimensions()
     
@@ -22,103 +27,25 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     private let overlayLayer = CALayer()
     private var bboxTransform =  CGAffineTransform.identity
     
-    // update camera orientation based on UI orientation
-    fileprivate func updateCameraOrientation()
-    {
-        // base on device orientation,
-        // switch orientation of the preview layer and overlay layers, and
-        // update bounding box transform
-        switch UIDevice.current.orientation
-        {
-            // home button on top
-            case UIDeviceOrientation.portraitUpsideDown:
-                print( "portrait upside down" )
-                previewLayer.connection?.videoOrientation = .portraitUpsideDown
-                overlayLayer.bounds = CGRect( x: 0,
-                                              y: 0,
-                                              width: CGFloat( captureResolution.height ),
-                                              height: CGFloat( captureResolution.width ) )
-                bboxTransform = CGAffineTransform.identity
-                                    .scaledBy( x: 1, y: -1 )
-                                    .translatedBy( x: overlayLayer.bounds.width, y: 0 - overlayLayer.bounds.height )
-                                    .scaledBy( x: overlayLayer.bounds.width, y: overlayLayer.bounds.height )
-                                    .rotated( by: Double.pi / 2 )
-                break
-            
-            // home button on right
-            case UIDeviceOrientation.landscapeLeft:
-                print( "landscape left" )
-                previewLayer.connection?.videoOrientation = .landscapeRight
-                overlayLayer.bounds = CGRect( x: 0,
-                                              y: 0,
-                                              width: CGFloat( captureResolution.width ),
-                                              height: CGFloat( captureResolution.height ) )
-                bboxTransform = CGAffineTransform.identity
-                                    .scaledBy( x: 1, y: -1 )
-                                    .translatedBy( x: 0, y: 0 - overlayLayer.bounds.height )
-                                    .scaledBy( x: overlayLayer.bounds.width, y: overlayLayer.bounds.height )
-                break
-            
-            // home button on left
-            case UIDeviceOrientation.landscapeRight:
-                print( "landscape right" )
-                previewLayer.connection?.videoOrientation = .landscapeLeft
-                overlayLayer.bounds = CGRect( x: 0,
-                                              y: 0,
-                                              width: CGFloat( captureResolution.width ),
-                                              height: CGFloat( captureResolution.height ) )
-                bboxTransform = CGAffineTransform.identity
-                                    .scaledBy( x: -1, y: 1 )
-                                    .translatedBy( x: 0 - overlayLayer.bounds.width, y: 0 )
-                                    .scaledBy( x: overlayLayer.bounds.width, y: overlayLayer.bounds.height )
-                break
-                
-            // home button on bottom
-            case UIDeviceOrientation.portrait:
-                print( "portrait" )
-                previewLayer.connection?.videoOrientation = .portrait
-                overlayLayer.bounds = CGRect( x: 0,
-                                              y: 0,
-                                              width: CGFloat( captureResolution.height ),
-                                              height: CGFloat( captureResolution.width ) )
-                bboxTransform = CGAffineTransform.identity
-                                    .scaledBy( x: -1, y: 1 )
-                                    .scaledBy( x: overlayLayer.bounds.width, y: overlayLayer.bounds.height )
-                                    .rotated( by: Double.pi / 2 )
-                break
-            
-            default:
-                break
-        }
-        
-        // maximize preview layer size
-        previewLayer.videoGravity = .resizeAspectFill
-        previewLayer.frame = view.layer.bounds
-        
-        // reposition overlay layer
-        overlayLayer.anchorPoint = previewLayer.anchorPoint
-        overlayLayer.position = previewLayer.position
-    }
+    // for metal GPU accelleration
+    private let mtkView = MTKView()
+    private let metalDevice = MTLCreateSystemDefaultDevice()
+    private var metalCommandQueue: MTLCommandQueue!
     
-    // set up AVCapture session
-    fileprivate func setupCamera()
+    // for blurring
+    private var context: CIContext!
+    private var curImage: CIImage?
+    private let scaleFilter = CIFilter( name: "CILanczosScaleTransform" )
+    private let blurFilter = CIFilter( name: "CIGaussianBlur" )
+    
+    
+    /*---------- life hook functions ----------*/
+
+    
+    // set up core image
+    fileprivate func setupCoreImage()
     {
-        // set up capture session
-        captureSession.sessionPreset = .high
-        guard let device = captureDevice else { return }
-        guard let input = try? AVCaptureDeviceInput( device: device ) else { return }
-        captureSession.addInput( input )
-        captureSession.startRunning()
-        captureResolution = captureDevice?.activeFormat.formatDescription.dimensions ?? CMVideoDimensions()
-        print( captureResolution )
-        
-        // set up privew layer
-        previewLayer.session = captureSession
-        view.layer.addSublayer( previewLayer )
-        
-        // set up data output
-        dataOutput.setSampleBufferDelegate( self, queue: DispatchQueue( label: "videoQueue" ) )
-        captureSession.addOutput( dataOutput )
+        context = CIContext( mtlDevice: metalDevice!)
     }
     
     // set up drawing layers
@@ -127,12 +54,15 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         // overlay layer
         overlayLayer.name = "DetectionOverlay"
         overlayLayer.masksToBounds = true
-        previewLayer.addSublayer( overlayLayer )
+        //        previewLayer.addSublayer( overlayLayer )
+        mtkView.layer.addSublayer( overlayLayer )
     }
-
+    
     override func viewDidLoad()
     {
         super.viewDidLoad()
+        setupMetal()
+        setupCoreImage()
         setupCamera()
         setupDrawingLayers()
     }
@@ -148,7 +78,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         super.viewWillTransition( to: size, with: coordinator )
         
         coordinator.animate( alongsideTransition: nil, completion:
-        { [weak self] ( context ) in
+                                { [weak self] ( context ) in
             DispatchQueue.main.async
             {
                 self?.updateCameraOrientation()
@@ -156,11 +86,161 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         } )
     }
     
+    
+    /*---------- setup functions ----------*/
+    
+    
+    // set up AVCapture session
+    fileprivate func setupCamera()
+    {
+        // set up capture session
+        captureSession.sessionPreset = .high
+        guard let device = captureDevice else { return }
+        guard let input = try? AVCaptureDeviceInput( device: device ) else { return }
+        captureSession.addInput( input )
+        captureSession.startRunning()
+        captureResolution = captureDevice?.activeFormat.formatDescription.dimensions ?? CMVideoDimensions()
+        print( captureResolution )
+        
+        // set up privew layer
+        //        previewLayer.session = captureSession
+        //        view.layer.addSublayer( previewLayer )
+        
+        // set up data output
+        dataOutput.setSampleBufferDelegate( self, queue: DispatchQueue( label: "videoQueue" ) )
+        captureSession.addOutput( dataOutput )
+    }
+    
+    // set up metal
+    fileprivate func setupMetal()
+    {
+        // set up metal view
+        mtkView.translatesAutoresizingMaskIntoConstraints = false
+        mtkView.frame = view.frame
+        mtkView.device = metalDevice
+        
+        // tell metal view to use explicit drawing
+        mtkView.isPaused = true
+        mtkView.enableSetNeedsDisplay = false
+        
+        // create a command queue to send instruction to GPU
+        metalCommandQueue = metalDevice?.makeCommandQueue()
+        
+        // conform to our MTKView's delegate
+        mtkView.delegate = self
+        
+        // let drawable texture be written
+        mtkView.framebufferOnly = false
+        
+        // add to view
+        view.addSubview( mtkView )
+    }
+    
+    
+    /*---------- update functions ----------*/
+    
+    
+    // disabled rotation, so this is currently not needed
+    // update camera orientation based on UI orientation
+    fileprivate func updateCameraOrientation()
+    {
+        // base on device orientation,
+        // switch orientation of the preview layer and overlay layers, and
+        // update bounding box transform
+        // NOT WORKING: texture inside metal view is not rotating
+        switch UIDevice.current.orientation
+        {
+            // home button on top
+            case UIDeviceOrientation.portraitUpsideDown:
+//                print( "portrait upside down" )
+//                previewLayer.connection?.videoOrientation = .portraitUpsideDown
+                
+                overlayLayer.bounds = CGRect( x: 0,
+                                              y: 0,
+                                              width: CGFloat( captureResolution.height ),
+                                              height: CGFloat( captureResolution.width ) )
+                bboxTransform = CGAffineTransform.identity
+                    .scaledBy( x: 1, y: -1 )
+                    .translatedBy( x: overlayLayer.bounds.width, y: 0 - overlayLayer.bounds.height )
+                    .scaledBy( x: overlayLayer.bounds.width, y: overlayLayer.bounds.height )
+                    .rotated( by: Double.pi / 2 )
+                break
+                
+            // home button on right
+            case UIDeviceOrientation.landscapeLeft:
+//                print( "landscape left" )
+//                previewLayer.connection?.videoOrientation = .landscapeRight
+                overlayLayer.bounds = CGRect( x: 0,
+                                              y: 0,
+                                              width: CGFloat( captureResolution.width ),
+                                              height: CGFloat( captureResolution.height ) )
+                bboxTransform = CGAffineTransform.identity
+                    .scaledBy( x: 1, y: -1 )
+                    .translatedBy( x: 0, y: 0 - overlayLayer.bounds.height )
+                    .scaledBy( x: overlayLayer.bounds.width, y: overlayLayer.bounds.height )
+                break
+                
+            // home button on left
+            case UIDeviceOrientation.landscapeRight:
+//                print( "landscape right" )
+//                previewLayer.connection?.videoOrientation = .landscapeLeft
+                overlayLayer.bounds = CGRect( x: 0,
+                                              y: 0,
+                                              width: CGFloat( captureResolution.width ),
+                                              height: CGFloat( captureResolution.height ) )
+                bboxTransform = CGAffineTransform.identity
+                    .scaledBy( x: -1, y: 1 )
+                    .translatedBy( x: 0 - overlayLayer.bounds.width, y: 0 )
+                    .scaledBy( x: overlayLayer.bounds.width, y: overlayLayer.bounds.height )
+                break
+                
+            // home button on bottom
+            case UIDeviceOrientation.portrait:
+//                print( "portrait" )
+//                previewLayer.connection?.videoOrientation = .portrait
+                overlayLayer.bounds = CGRect( x: 0,
+                                              y: 0,
+                                              width: CGFloat( captureResolution.height ),
+                                              height: CGFloat( captureResolution.width ) )
+                bboxTransform = CGAffineTransform.identity
+                    .scaledBy( x: -1, y: 1 )
+                    .scaledBy( x: overlayLayer.bounds.width, y: overlayLayer.bounds.height )
+                    .rotated( by: Double.pi / 2 )
+                break
+                    
+            default:
+                break
+        }
+        
+        // maximize preview layer size
+        //        previewLayer.videoGravity = .resizeAspectFill
+        //        previewLayer.frame = view.layer.bounds
+        
+        // update metal view
+        mtkView.frame = view.frame
+        
+        // reposition overlay layer
+        //        overlayLayer.anchorPoint = previewLayer.anchorPoint
+        //        overlayLayer.position = previewLayer.position
+        overlayLayer.anchorPoint = mtkView.layer.anchorPoint
+        overlayLayer.position = mtkView.layer.position
+    }
+}
+    
+// video output delegation extension
+extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate
+{
     // process each frame
     func captureOutput( _ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection )
     {
+        // try an get a CVImageBuffer out of the sample buffer
         guard let pixelBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer( sampleBuffer ) else { return }
         
+        // get a CIImage ourt of the CVImageBuffer
+        curImage = CIImage( cvPixelBuffer: pixelBuffer )
+        mtkView.draw()
+        
+        // face dection request
         let faceDetectionReq = VNDetectFaceRectanglesRequest
         { ( req, err ) in
             
@@ -173,7 +253,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             
             // get results from face detection
             guard let results = req.results as? [VNFaceObservation] else { return }
-            
+    
             // add observations to the tracking list
             DispatchQueue.main.async
             {
@@ -182,22 +262,20 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                 
                 for obs in results
                 {
+                    // add a bounding box to each observed face
                     let layer = CAShapeLayer()
                     layer.frame = obs.boundingBox.applying( self.bboxTransform )
                     layer.borderColor = UIColor.green.withAlphaComponent( 0.7 ).cgColor
                     layer.borderWidth = 5
-                    layer.shadowOpacity = 0.7
-                    layer.shadowRadius = 5
                     self.overlayLayer.addSublayer( layer )
-//                    let faceTrackingReq = VNTrackObjectRequest( detectedObjectObservation: obs )
                 }
             }
         }
         
         DispatchQueue.global( qos: .userInteractive ).async
         {
+            // handle image request
             let handler = VNImageRequestHandler( cvPixelBuffer: pixelBuffer, options: [:] )
-            
             do
             {
                 try handler.perform([ faceDetectionReq ])
@@ -207,5 +285,49 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                 print("Failed to perform request:", reqErr)
             }
         }
+    }
+}
+
+// metal renderer delegation
+extension ViewController: MTKViewDelegate
+{
+    // drawable size changed
+    func mtkView( _ view: MTKView, drawableSizeWillChange size: CGSize )
+    {
+        
+    }
+    
+    // render to screen
+    func draw( in view: MTKView )
+    {
+        // create command buffer for context to use to encode it's rendering instructions to GPU
+        guard let commandBuffer = metalCommandQueue.makeCommandBuffer() else { return }
+        
+        // make sure there is actually an image
+        guard let image = curImage else { return }
+        
+        // make sure the current drawable object for this metal view is available
+        guard let curDrawable = view.currentDrawable else { return }
+        
+        // make sure frame is centered on screen
+        let imageWidth = image.extent.width
+        let imageHeight = image.extent.height
+        let drawableWidth = view.drawableSize.width
+        let drawableHeight = view.drawableSize.height
+        let xOffsetFromLeft = ( drawableWidth - imageWidth ) / 2
+        let yOffsetFromBottom = ( drawableHeight - imageHeight ) / 2
+        
+        // render into the metal texture
+        self.context.render( image,
+                             to: curDrawable.texture,
+                             commandBuffer: commandBuffer,
+                             bounds: CGRect( origin: CGPoint( x: -xOffsetFromLeft, y: -yOffsetFromBottom ), size: view.drawableSize ),
+                             colorSpace: CGColorSpaceCreateDeviceRGB() )
+       
+        // register where to draw the instructions in the command buffer
+        commandBuffer.present( curDrawable )
+        
+        // commit the command to the queue so it executes
+        commandBuffer.commit()
     }
 }
