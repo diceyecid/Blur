@@ -105,6 +105,9 @@ venv/
 # IDE
 .idea
 
+# image folder
+Img/
+
 
 #---------- Others ----------#
 
