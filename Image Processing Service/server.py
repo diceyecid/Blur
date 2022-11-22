@@ -2,6 +2,7 @@
 
 import tornado.web
 import tornado.ioloop
+from processImage import addUserToCrowd
 
 # server url
 URL = 'http://localhost:4040/'
@@ -15,13 +16,22 @@ class uploadImgHandler(tornado.web.RequestHandler):
     # uplaod image to img folder
     def post(self):
         if( 'image' in self.request.files ):
+            # variables
             files = self.request.files["image"]
             f = files[0]
-            fh = open(f"img/{f.filename}", "wb")
-            fh.write(f.body)
+            imgPath = 'img/' + f.filename
+
+            # save image
+            fh = open( imgPath, "wb" )
+            fh.write( f.body )
             fh.close()
+
+            # process image
+            addUserToCrowd( imgPath, imgPath )
+
+            # send response back to client
             # self.write( URL + f"img/{f.filename}")
-            self.redirect( URL + f'img/{ f.filename }' )
+            self.redirect( URL + imgPath )
         else:
             self.write( 'No image uploaded' )
 
