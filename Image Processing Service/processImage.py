@@ -11,3 +11,5 @@ def addUserToCrowd( inputPath, outputPath ):
     inputImg = cv2.imread( inputPath )
     outputImg = remove( inputImg )
     cv2.imwrite( outputPath, outputImg )
+
+    return outputImg, outputPath
