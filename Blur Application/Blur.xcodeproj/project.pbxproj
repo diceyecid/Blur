@@ -12,7 +12,23 @@
 		D785D978292998D7008D457A /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D785D977292998D7008D457A /* ViewController.swift */; };
 		D785D97D292998D9008D457A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D785D97C292998D9008D457A /* Assets.xcassets */; };
 		D785D980292998D9008D457A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D785D97E292998D9008D457A /* LaunchScreen.storyboard */; };
+		D7871FD4292E32A800C7836D /* gender_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = D7871FD2292E32A700C7836D /* gender_model.mlpackage */; };
+		D7871FD5292E32A800C7836D /* race_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = D7871FD3292E32A700C7836D /* race_model.mlpackage */; };
+		D7871FD7292EC5E000C7836D /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7871FD6292EC5E000C7836D /* Util.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D785D98D292D759A008D457A /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		D785D970292998D7008D457A /* Blur.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blur.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -22,6 +38,9 @@
 		D785D97C292998D9008D457A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D785D97F292998D9008D457A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D785D981292998D9008D457A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D7871FD2292E32A700C7836D /* gender_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; name = gender_model.mlpackage; path = ../../Util/gender_model.mlpackage; sourceTree = "<group>"; };
+		D7871FD3292E32A700C7836D /* race_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; name = race_model.mlpackage; path = ../../Util/race_model.mlpackage; sourceTree = "<group>"; };
+		D7871FD6292EC5E000C7836D /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,6 +59,7 @@
 			children = (
 				D785D972292998D7008D457A /* Blur Application */,
 				D785D971292998D7008D457A /* Products */,
+				D7871FC2292DC4F700C7836D /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -54,14 +74,24 @@
 		D785D972292998D7008D457A /* Blur Application */ = {
 			isa = PBXGroup;
 			children = (
+				D7871FD2292E32A700C7836D /* gender_model.mlpackage */,
+				D7871FD3292E32A700C7836D /* race_model.mlpackage */,
 				D785D973292998D7008D457A /* AppDelegate.swift */,
 				D785D975292998D7008D457A /* SceneDelegate.swift */,
 				D785D977292998D7008D457A /* ViewController.swift */,
 				D785D97C292998D9008D457A /* Assets.xcassets */,
 				D785D97E292998D9008D457A /* LaunchScreen.storyboard */,
 				D785D981292998D9008D457A /* Info.plist */,
+				D7871FD6292EC5E000C7836D /* Util.swift */,
 			);
 			path = "Blur Application";
+			sourceTree = "<group>";
+		};
+		D7871FC2292DC4F700C7836D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -74,12 +104,15 @@
 				D785D96C292998D7008D457A /* Sources */,
 				D785D96D292998D7008D457A /* Frameworks */,
 				D785D96E292998D7008D457A /* Resources */,
+				D785D98D292D759A008D457A /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = Blur;
+			packageProductDependencies = (
+			);
 			productName = "Blur Application";
 			productReference = D785D970292998D7008D457A /* Blur.app */;
 			productType = "com.apple.product-type.application";
@@ -108,6 +141,8 @@
 				Base,
 			);
 			mainGroup = D785D967292998D7008D457A;
+			packageReferences = (
+			);
 			productRefGroup = D785D971292998D7008D457A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -134,8 +169,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D7871FD5292E32A800C7836D /* race_model.mlpackage in Sources */,
+				D7871FD7292EC5E000C7836D /* Util.swift in Sources */,
 				D785D978292998D7008D457A /* ViewController.swift in Sources */,
 				D785D974292998D7008D457A /* AppDelegate.swift in Sources */,
+				D7871FD4292E32A800C7836D /* gender_model.mlpackage in Sources */,
 				D785D976292998D7008D457A /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -285,7 +323,7 @@
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationLandscapeRight;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -316,7 +354,7 @@
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationLandscapeRight;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

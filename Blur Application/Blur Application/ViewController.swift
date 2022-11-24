@@ -39,31 +39,26 @@ class ViewController: UIViewController
     private let scaleFilter = CIFilter( name: "CILanczosScaleTransform" )
     private let blurFilter = CIFilter( name: "CIGaussianBlur" )
     
+    // ml models for face analysis
+    private var genderModel: VNCoreMLModel?
+    private var genderRequest: VNCoreMLRequest?
+    private var genderObservations: [VNClassificationObservation] = []
+    private var raceModel: VNCoreMLModel?
+    private var raceRequest: VNCoreMLRequest?
+    private var raceObservations: [VNClassificationObservation] = []
+    private var isInferencing: Bool = false
+    let semaphore = DispatchSemaphore( value: 1 )
+    
     
     /*---------- life hook functions ----------*/
-
     
-    // set up core image
-    fileprivate func setupCoreImage()
-    {
-        context = CIContext( mtlDevice: metalDevice!)
-    }
-    
-    // set up drawing layers
-    fileprivate func setupDrawingLayers()
-    {
-        // overlay layer
-        overlayLayer.name = "DetectionOverlay"
-        overlayLayer.masksToBounds = true
-        //        previewLayer.addSublayer( overlayLayer )
-        mtkView.layer.addSublayer( overlayLayer )
-    }
     
     override func viewDidLoad()
     {
         super.viewDidLoad()
         setupMetal()
         setupCoreImage()
+        setupModels()
         setupCamera()
         setupDrawingLayers()
     }
@@ -91,27 +86,6 @@ class ViewController: UIViewController
     /*---------- setup functions ----------*/
     
     
-    // set up AVCapture session
-    fileprivate func setupCamera()
-    {
-        // set up capture session
-        captureSession.sessionPreset = .high
-        guard let device = captureDevice else { return }
-        guard let input = try? AVCaptureDeviceInput( device: device ) else { return }
-        captureSession.addInput( input )
-        captureSession.startRunning()
-        captureResolution = captureDevice?.activeFormat.formatDescription.dimensions ?? CMVideoDimensions()
-        print( captureResolution )
-        
-        // set up privew layer
-        //        previewLayer.session = captureSession
-        //        view.layer.addSublayer( previewLayer )
-        
-        // set up data output
-        dataOutput.setSampleBufferDelegate( self, queue: DispatchQueue( label: "videoQueue" ) )
-        captureSession.addOutput( dataOutput )
-    }
-    
     // set up metal
     fileprivate func setupMetal()
     {
@@ -135,6 +109,63 @@ class ViewController: UIViewController
         
         // add to view
         view.addSubview( mtkView )
+    }
+    
+    // set up core image
+    fileprivate func setupCoreImage()
+    {
+        context = CIContext( mtlDevice: metalDevice!)
+    }
+    
+    // set up ml models
+    fileprivate func setupModels()
+    {
+        // gender model
+        if let genderModel = try? VNCoreMLModel( for: gender_model().model )
+        {
+            self.genderModel = genderModel
+            self.genderRequest = VNCoreMLRequest( model: genderModel, completionHandler: genderRequestDidComplete )
+            self.genderRequest?.imageCropAndScaleOption = .scaleFill
+        }
+        
+        // race model
+        if let raceModel = try? VNCoreMLModel( for: race_model().model )
+        {
+            self.raceModel = raceModel
+            self.raceRequest = VNCoreMLRequest( model: raceModel, completionHandler: raceRequestDidComplete )
+            self.raceRequest?.imageCropAndScaleOption = .scaleFill
+        }
+    }
+    
+    // set up AVCapture session
+    fileprivate func setupCamera()
+    {
+        // set up capture session
+        captureSession.sessionPreset = .high
+        guard let device = captureDevice else { return }
+        guard let input = try? AVCaptureDeviceInput( device: device ) else { return }
+        captureSession.addInput( input )
+        captureSession.startRunning()
+        captureResolution = captureDevice?.activeFormat.formatDescription.dimensions ?? CMVideoDimensions()
+        print( captureResolution )
+        
+        // set up privew layer
+        //        previewLayer.session = captureSession
+        //        view.layer.addSublayer( previewLayer )
+        
+        // set up data output
+        dataOutput.setSampleBufferDelegate( self, queue: DispatchQueue( label: "videoQueue" ) )
+        captureSession.addOutput( dataOutput )
+    }
+    
+    // set up drawing layers
+    fileprivate func setupDrawingLayers()
+    {
+        // overlay layer
+        overlayLayer.name = "DetectionOverlay"
+        overlayLayer.masksToBounds = true
+        //        previewLayer.addSublayer( overlayLayer )
+        mtkView.layer.addSublayer( overlayLayer )
     }
     
     
@@ -227,38 +258,114 @@ class ViewController: UIViewController
         overlayLayer.position = mtkView.layer.position
     }
 }
-    
-// video output delegation extension
-extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate
+
+// vision model extension
+extension ViewController
 {
-    // process each frame
-    func captureOutput( _ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection )
+    func genderRequestDidComplete( request: VNRequest, error: Error? )
     {
-        // try an get a CVImageBuffer out of the sample buffer
-        guard let pixelBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer( sampleBuffer ) else { return }
+        // error
+        if error != nil
+        {
+            print( "Failed to detect gender: \( String( describing: error ) )." )
+            return
+        }
         
-        // get a CIImage ourt of the CVImageBuffer
-        self.curImage = CIImage( cvPixelBuffer: pixelBuffer )
-        
-        // start drawing metal view
-        self.mtkView.draw()
-        
-        // face dection request
-        let faceDetectionReq = VNDetectFaceRectanglesRequest
-        { ( req, err ) in
-            
-            // error
-            if err != nil
+        DispatchQueue.main.async
+        {
+            // get results from gender detection
+            if let results = request.results as? [VNClassificationObservation]
             {
-                print( "Failed to detect faces: \( String( describing: err ) )." )
-                return
+                DispatchQueue.main.async
+                {
+                    self.genderObservations.append( contentsOf: results )
+                }
             }
+        }
+    }
+    
+    func raceRequestDidComplete( request: VNRequest, error: Error? )
+    {
+        // error
+        if error != nil
+        {
+            print( "Failed to detect race: \( String( describing: error ) )." )
+            return
+        }
+        
+        // get results from race detection
+        if let results = request.results as? [VNClassificationObservation]
+        {
+            DispatchQueue.main.async
+            {
+                self.raceObservations.append( contentsOf: results )
+//                self.isInferencing = false
+            }
+        }
+        else
+        {
+//            self.isInferencing = false
+        }
+        
+//        self.semaphore.signal()
+    }
+    
+    func faceRequestDidComplete( req: VNRequest, err: Error? )
+    {
+        // error
+        if err != nil
+        {
+            print( "Failed to detect faces: \( String( describing: err ) )." )
+            return
+        }
+        
+        // get results from face detection
+        guard let results = req.results as? [VNFaceObservation] else { return }
+        self.faceObservations = results
+        
+        if( results.isEmpty )
+        {
+            self.isInferencing = false
+            self.semaphore.signal()
+            return
+        }
+        
+        // refresh observations from last frame
+        self.genderObservations = []
+        self.raceObservations = []
+        var requests : [VNCoreMLRequest] = []
+        
+        // face analysis
+        for obs in results
+        {
+            // preprocess image to get face only
+            let bbox = VNImageRectForNormalizedRect( obs.boundingBox,
+                                                     Int( self.captureResolution.width ),
+                                                     Int( self.captureResolution.height ) )
+            let bboxBuffer = Util.createCVPixelBuffer( width: Int( bbox.width ), height: Int( bbox.height ) )
+//                bboxBuffer = Util.crop( pixelBuffer: bboxBuffer!, to: bbox )
+            let bboxImage = self.curImage?.cropped( to: bbox )
+            self.context.render( bboxImage!, to: bboxBuffer! )
+
+            // analyze face
+            let handler = VNImageRequestHandler( cvPixelBuffer: bboxBuffer!, options: [:] )
+            requests.append( self.genderRequest! )
+            requests.append( self.raceRequest! )
             
-            // get results from face detection
-            guard let results = req.results as? [VNFaceObservation] else { return }
-            self.faceObservations = results
-            
-            // draw bounding boxes
+            do
+            {
+                try handler.perform( requests )
+            }
+            catch let reqErr
+            {
+                print( "Failed to perform request:", reqErr )
+            }
+        }
+        self.isInferencing = false
+        self.semaphore.signal()
+
+        
+        // draw bounding boxes
 //            DispatchQueue.main.async
 //            {
 //                // clear all bounding boxes from previous frame
@@ -274,20 +381,41 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate
 //                    self.overlayLayer.addSublayer( layer )
 //                }
 //            }
-        }
+    }
+}
+    
+// video output delegation extension
+extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate
+{
+    // process each frame
+    func captureOutput( _ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection )
+    {
+        // try an get a CVImageBuffer out of the sample buffer
+        guard let pixelBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer( sampleBuffer ) else { return }
+//        print( CVPixelBufferGetPixelFormatType( pixelBuffer ) )
         
-        DispatchQueue.global( qos: .userInteractive ).async
+        // get a CIImage ourt of the CVImageBuffer
+        self.curImage = CIImage( cvPixelBuffer: pixelBuffer )
+        
+        // start drawing metal view
+        self.mtkView.draw()
+        
+        // face dection request
+        let faceDetectionReq = VNDetectFaceRectanglesRequest( completionHandler: faceRequestDidComplete )
+
+        // handle image request
+        self.isInferencing = true
+        let handler = VNImageRequestHandler( cvPixelBuffer: pixelBuffer, options: [:] )
+        do
         {
-            // handle image request
-            let handler = VNImageRequestHandler( cvPixelBuffer: pixelBuffer, options: [:] )
-            do
-            {
-                try handler.perform([ faceDetectionReq ])
-            }
-            catch let reqErr
-            {
-                print("Failed to perform request:", reqErr)
-            }
+            self.semaphore.wait()
+            try handler.perform( [ faceDetectionReq ] )
+        }
+        catch let reqErr
+        {
+            print( "Failed to perform request:", reqErr )
+            self.isInferencing = false
+            self.semaphore.signal()
         }
     }
 }
@@ -322,15 +450,19 @@ extension ViewController: MTKViewDelegate
         
         // blur image at face observation bounding boxes
         var blurredImage = filteredImage
-        for obs in faceObservations
+        for ( i, face ) in faceObservations.enumerated()
         {
-            let bbox = VNImageRectForNormalizedRect( obs.boundingBox,
-                                                     Int( captureResolution.width ),
-                                                     Int( captureResolution.height ) )
-            let bboxImage = blurredImage.cropped( to: bbox )
-            blurFilter?.setValue( bboxImage, forKey: kCIInputImageKey )
-            blurFilter?.setValue( 10.0, forKey: kCIInputRadiusKey )
-            blurredImage = ( blurFilter?.outputImage?.composited( over: blurredImage ) )!
+            print( raceObservations[i].identifier + " " + genderObservations[i].identifier )
+            if( genderObservations[i].identifier != "Man" && raceObservations[i].identifier != "white" )
+            {
+                let bbox = VNImageRectForNormalizedRect( face.boundingBox,
+                                                         Int( captureResolution.width ),
+                                                         Int( captureResolution.height ) )
+                let bboxImage = blurredImage.cropped( to: bbox )
+                blurFilter?.setValue( bboxImage, forKey: kCIInputImageKey )
+                blurFilter?.setValue( 20.0, forKey: kCIInputRadiusKey )
+                blurredImage = ( blurFilter?.outputImage?.composited( over: blurredImage ) )!
+            }
         }
         filteredImage = blurredImage
         
