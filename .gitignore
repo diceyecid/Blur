@@ -114,3 +114,7 @@ img/
 
 # MacOS system file
 .DS_Store
+
+# skip CoreML models as they are too large
+# instruction in README for how to obtain them
+*.mlpackage
