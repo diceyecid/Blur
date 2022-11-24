@@ -1,3 +1,4 @@
-tornado
-rembg
-opencv-python
+numpy==1.22.3
+opencv_python==4.5.5.64
+rembg==2.0.25
+tornado==6.2

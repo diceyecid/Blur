@@ -118,3 +118,6 @@ img/
 # skip CoreML models as they are too large
 # instruction in README for how to obtain them
 *.mlpackage
+
+# hosting on heroku directory
+herokuHosting/
