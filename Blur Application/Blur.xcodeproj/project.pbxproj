@@ -7,14 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D73052F8292F764B00A382CD /* race_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = D73052F7292F764B00A382CD /* race_model.mlpackage */; };
+		D73052FA292F768F00A382CD /* gender_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = D73052F9292F768F00A382CD /* gender_model.mlpackage */; };
 		D785D974292998D7008D457A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D785D973292998D7008D457A /* AppDelegate.swift */; };
 		D785D976292998D7008D457A /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D785D975292998D7008D457A /* SceneDelegate.swift */; };
 		D785D978292998D7008D457A /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D785D977292998D7008D457A /* ViewController.swift */; };
 		D785D97D292998D9008D457A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D785D97C292998D9008D457A /* Assets.xcassets */; };
 		D785D980292998D9008D457A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D785D97E292998D9008D457A /* LaunchScreen.storyboard */; };
-		D7871FD4292E32A800C7836D /* gender_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = D7871FD2292E32A700C7836D /* gender_model.mlpackage */; };
-		D7871FD5292E32A800C7836D /* race_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = D7871FD3292E32A700C7836D /* race_model.mlpackage */; };
-		D7871FD7292EC5E000C7836D /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7871FD6292EC5E000C7836D /* Util.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,16 +30,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D73052F7292F764B00A382CD /* race_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; name = race_model.mlpackage; path = ../../Util/race_model.mlpackage; sourceTree = "<group>"; };
+		D73052F9292F768F00A382CD /* gender_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; name = gender_model.mlpackage; path = ../../Util/gender_model.mlpackage; sourceTree = "<group>"; };
 		D785D970292998D7008D457A /* Blur.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blur.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D785D973292998D7008D457A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D785D975292998D7008D457A /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		D785D977292998D7008D457A /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		D785D977292998D7008D457A /* ViewController.swift */ = {isa = PBXFileReference; indentWidth = 3; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		D785D97C292998D9008D457A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D785D97F292998D9008D457A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D785D981292998D9008D457A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		D7871FD2292E32A700C7836D /* gender_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; name = gender_model.mlpackage; path = ../../Util/gender_model.mlpackage; sourceTree = "<group>"; };
-		D7871FD3292E32A700C7836D /* race_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; name = race_model.mlpackage; path = ../../Util/race_model.mlpackage; sourceTree = "<group>"; };
-		D7871FD6292EC5E000C7836D /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,15 +72,14 @@
 		D785D972292998D7008D457A /* Blur Application */ = {
 			isa = PBXGroup;
 			children = (
-				D7871FD2292E32A700C7836D /* gender_model.mlpackage */,
-				D7871FD3292E32A700C7836D /* race_model.mlpackage */,
+				D73052F9292F768F00A382CD /* gender_model.mlpackage */,
+				D73052F7292F764B00A382CD /* race_model.mlpackage */,
 				D785D973292998D7008D457A /* AppDelegate.swift */,
 				D785D975292998D7008D457A /* SceneDelegate.swift */,
 				D785D977292998D7008D457A /* ViewController.swift */,
 				D785D97C292998D9008D457A /* Assets.xcassets */,
 				D785D97E292998D9008D457A /* LaunchScreen.storyboard */,
 				D785D981292998D9008D457A /* Info.plist */,
-				D7871FD6292EC5E000C7836D /* Util.swift */,
 			);
 			path = "Blur Application";
 			sourceTree = "<group>";
@@ -169,11 +166,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D7871FD5292E32A800C7836D /* race_model.mlpackage in Sources */,
-				D7871FD7292EC5E000C7836D /* Util.swift in Sources */,
+				D73052FA292F768F00A382CD /* gender_model.mlpackage in Sources */,
 				D785D978292998D7008D457A /* ViewController.swift in Sources */,
 				D785D974292998D7008D457A /* AppDelegate.swift in Sources */,
-				D7871FD4292E32A800C7836D /* gender_model.mlpackage in Sources */,
+				D73052F8292F764B00A382CD /* race_model.mlpackage in Sources */,
 				D785D976292998D7008D457A /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -311,14 +307,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 298624773S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Blur Application/Info.plist";
-				INFOPLIST_KEY_NSCameraUsageDescription = "${PRODUCT_NAME) uses Cameras";
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
@@ -342,14 +339,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 298624773S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Blur Application/Info.plist";
-				INFOPLIST_KEY_NSCameraUsageDescription = "${PRODUCT_NAME) uses Cameras";
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
