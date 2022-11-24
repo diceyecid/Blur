@@ -27,11 +27,11 @@ class uploadImgHandler(tornado.web.RequestHandler):
             fh.close()
 
             # process image
-            _, imgPath = addUserToCrowd( imgPath, imgPath )
+            _, composePath = addUserToCrowd( imgPath )
 
             # send response back to client
             # self.write( URL + f"img/{f.filename}")
-            self.redirect( URL + imgPath )
+            self.redirect( URL + composePath )
         else:
             self.write( 'No image uploaded' )
 
